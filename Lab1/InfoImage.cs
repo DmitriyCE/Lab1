@@ -1,9 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.IO;
+using System.Net;
+using MetadataExtractor;
+using MetadataExtractor.Formats.Exif;
+using System.Xml.Linq;
 
 namespace Lab1
 {
@@ -23,5 +24,31 @@ namespace Lab1
             }
             return photoDate;
         }
+
+        public static string GetLocationPhoto(FileInfo photo)
+        {
+            var coordinates = ImageMetadataReader.ReadMetadata(photo.FullName).OfType<GpsDirectory>().FirstOrDefault();
+            var location = coordinates?.GetGeoLocation();
+            var latitude = location?.Latitude.ToString().Replace(',','.');
+            var longitude = location?.Longitude.ToString().Replace(',', '.');
+            if (location == null)
+            {
+                return null;
+            }
+            return longitude + "," + latitude;
+        }
+        public static string GetLocality(string coordinates)
+        {
+            WebRequest request = WebRequest.Create("https://geocode-maps.yandex.ru/1.x/?geocode=" + coordinates);
+            using (WebResponse response = request.GetResponse())
+            using (Stream responseStream = response.GetResponseStream())
+            {
+                XNamespace ns = "urn:oasis:names:tc:ciq:xsdschema:xAL:2.0";
+                XDocument responseDocument = XDocument.Load(responseStream);
+                XElement firstLocality = responseDocument.Descendants(ns + "LocalityName").FirstOrDefault();
+                return firstLocality?.Value;
+            }
+        }
+
     }
 }

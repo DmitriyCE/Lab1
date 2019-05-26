@@ -1,14 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Threading;
+using System.Windows.Forms;
 using static System.Console;
 
 namespace Lab1
 {
     public static class ApplicationInterface
     {
+        public delegate void PhotoStateHandler(PhotoEventsArgs args);
         public static void AppFunc()
         {
             ForegroundColor = ConsoleColor.Red;
@@ -32,8 +31,26 @@ namespace Lab1
         }
         public static string PathRequest()
         {
-            WriteLine("Введите путь к папке с изображениями");
-            return @"d:\Рабочая папка\CS\ДЗ\Lab\foto\";//ReadLine();
+            WriteLine("Выберите путь к папке с изображениями");
+
+            string path = null;
+            Thread thread = new Thread(() =>
+            {
+                using (FolderBrowserDialog fbd = new FolderBrowserDialog())
+                {
+                    if (fbd.ShowDialog() == DialogResult.OK)
+                    {
+                        path = fbd.SelectedPath;
+                    }
+                }
+            });
+            thread.SetApartmentState(ApartmentState.STA);
+            thread.Start();
+            thread.Join();
+            return path;
+
+
+            //return @"i:\CS\Labs\photo1\";//ReadLine();
         }
     }
 }
